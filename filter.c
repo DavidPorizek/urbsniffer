@@ -240,14 +240,14 @@ FilterEvtWdfIoQueueIoInternalDeviceControl(
 	IN ULONG				IoControlCode
 )
 {
-	NTSTATUS status = STATUS_SUCCESS;
+	//NTSTATUS status = STATUS_SUCCESS;
 	WDFDEVICE device;
 	//WDFMEMORY  reqMemory;
 	PURB pUrb = NULL;
-	PVOID pMemory = NULL;
+	//PVOID pMemory = NULL;
 	PIRP pIrp = NULL;
 	PIO_STACK_LOCATION location = NULL;
-	size_t bufferLength = 0;
+	//size_t bufferLength = 0;
 
 	UNREFERENCED_PARAMETER(OutputBufferLength);
 	UNREFERENCED_PARAMETER(InputBufferLength);
@@ -266,14 +266,6 @@ FilterEvtWdfIoQueueIoInternalDeviceControl(
 	switch (IoControlCode) {
 
 	case IOCTL_INTERNAL_USB_SUBMIT_URB:
-		if (OutputBufferLength <= 0)
-			break;
-
-		status = WdfRequestRetrieveInputBuffer(Request, 0, &pMemory, &bufferLength);
-
-		if (!NT_SUCCESS(status)) {
-			goto Exit;
-		}
 
 		pUrb = (PURB)location->Parameters.Others.Argument1;
 
@@ -283,110 +275,70 @@ FilterEvtWdfIoQueueIoInternalDeviceControl(
 
 		switch (pUrb->UrbHeader.Function) {
 		case URB_FUNCTION_SELECT_CONFIGURATION:
-			break;
 		case URB_FUNCTION_SELECT_INTERFACE:
-			break;
 		case URB_FUNCTION_ABORT_PIPE:
-			break;
 		case URB_FUNCTION_TAKE_FRAME_LENGTH_CONTROL:
-			break;
 		case URB_FUNCTION_RELEASE_FRAME_LENGTH_CONTROL:
-			break;
 		case URB_FUNCTION_GET_FRAME_LENGTH:
-			break;
 		case URB_FUNCTION_SET_FRAME_LENGTH:
-			break;
 		case URB_FUNCTION_GET_CURRENT_FRAME_NUMBER:
-			break;
 		case URB_FUNCTION_CONTROL_TRANSFER:
-			break;
 		case URB_FUNCTION_CONTROL_TRANSFER_EX:
 			break;
 		case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
 
+			// Check if we are reading mouse data only
 			if (pUrb->UrbBulkOrInterruptTransfer.TransferBufferLength != MOUSE_DATA_DEFAULT)
 				goto Exit;
 
+			// Reset static buffer
 			if (++g_lMouseDataLength >= MOUSE_ARRAY_LENGTH)
 				g_lMouseDataLength = 0;
+
+			// If the buffer data are meant to be sent to device we don't read them
+			if ((pUrb->UrbBulkOrInterruptTransfer.TransferFlags & USBD_TRANSFER_DIRECTION_IN) == 0)
+				goto Exit;
 
 			RtlCopyMemory(g_aMouseData[g_lMouseDataLength], pUrb->UrbBulkOrInterruptTransfer.TransferBuffer, MOUSE_DATA_DEFAULT);
 
 			break;
 		case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER_USING_CHAINED_MDL:
-			break;
 		case URB_FUNCTION_ISOCH_TRANSFER:
-			break;
 		case URB_FUNCTION_ISOCH_TRANSFER_USING_CHAINED_MDL:
-			break;
 		case URB_FUNCTION_RESET_PIPE:
-			break;
-			//case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
-			//	break;
+		//case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
 		case URB_FUNCTION_SYNC_RESET_PIPE:
-			break;
 		case URB_FUNCTION_SYNC_CLEAR_STALL:
-			break;
 		case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
-			break;
 		case URB_FUNCTION_GET_DESCRIPTOR_FROM_ENDPOINT:
-			break;
 		case URB_FUNCTION_SET_DESCRIPTOR_TO_DEVICE:
-			break;
 		case URB_FUNCTION_SET_DESCRIPTOR_TO_ENDPOINT:
-			break;
 		case URB_FUNCTION_SET_FEATURE_TO_DEVICE:
-			break;
 		case URB_FUNCTION_SET_FEATURE_TO_INTERFACE:
-			break;
 		case URB_FUNCTION_SET_FEATURE_TO_ENDPOINT:
-			break;
 		case URB_FUNCTION_SET_FEATURE_TO_OTHER:
-			break;
 		case URB_FUNCTION_CLEAR_FEATURE_TO_DEVICE:
-			break;
 		case URB_FUNCTION_CLEAR_FEATURE_TO_INTERFACE:
-			break;
 		case URB_FUNCTION_CLEAR_FEATURE_TO_ENDPOINT:
-			break;
 		case URB_FUNCTION_CLEAR_FEATURE_TO_OTHER:
-			break;
 		case URB_FUNCTION_GET_STATUS_FROM_DEVICE:
-			break;
 		case URB_FUNCTION_GET_STATUS_FROM_INTERFACE:
-			break;
 		case URB_FUNCTION_GET_STATUS_FROM_ENDPOINT:
-			break;
 		case URB_FUNCTION_GET_STATUS_FROM_OTHER:
-			break;
 		case URB_FUNCTION_VENDOR_DEVICE:
-			break;
 		case URB_FUNCTION_VENDOR_INTERFACE:
-			break;
 		case URB_FUNCTION_VENDOR_OTHER:
-			break;
 		case URB_FUNCTION_CLASS_DEVICE:
-			break;
 		case URB_FUNCTION_CLASS_INTERFACE:
-			break;
 		case URB_FUNCTION_CLASS_ENDPOINT:
-			break;
 		case URB_FUNCTION_CLASS_OTHER:
-			break;
 		case URB_FUNCTION_GET_CONFIGURATION:
-			break;
 		case URB_FUNCTION_GET_INTERFACE:
-			break;
 		case URB_FUNCTION_GET_DESCRIPTOR_FROM_INTERFACE:
-			break;
 		case URB_FUNCTION_SET_DESCRIPTOR_TO_INTERFACE:
-			break;
 		case URB_FUNCTION_GET_MS_FEATURE_DESCRIPTOR:
-			break;
 		case URB_FUNCTION_OPEN_STATIC_STREAMS:
-			break;
 		case URB_FUNCTION_CLOSE_STATIC_STREAMS:
-			break;
 		default:
 			break;
 		}
